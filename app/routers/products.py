@@ -4,6 +4,8 @@ from typing import List
 
 from app.database import get_db
 from app import crud, schemas
+from app.auth import get_current_user
+from app.models import User
 
 router = APIRouter(
     prefix="/api/v1/products",
@@ -11,7 +13,11 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=schemas.ProductResponse, status_code=status.HTTP_201_CREATED)
-async def create_product(product: schemas.ProductCreate, db: AsyncSession = Depends(get_db)):
+async def create_product(
+    product: schemas.ProductCreate, 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """Create a new product in the inventory."""
     return await crud.create_product(db=db, product=product)
 
@@ -30,7 +36,12 @@ async def read_product(product_id: int, db: AsyncSession = Depends(get_db)):
     return db_product
 
 @router.put("/{product_id}", response_model=schemas.ProductResponse)
-async def update_product(product_id: int, product: schemas.ProductUpdate, db: AsyncSession = Depends(get_db)):
+async def update_product(
+    product_id: int, 
+    product: schemas.ProductUpdate, 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """Update a product's details or stock."""
     db_product = await crud.update_product(db, product_id, product)
     if db_product is None:
@@ -38,7 +49,11 @@ async def update_product(product_id: int, product: schemas.ProductUpdate, db: As
     return db_product
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_product(
+    product_id: int, 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """Remove a product from the inventory."""
     success = await crud.delete_product(db, product_id)
     if not success:
